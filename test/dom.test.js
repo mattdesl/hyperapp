@@ -738,3 +738,52 @@ testTreeSegue("elements with falsey values", [
     html: `<div></div>`
   }
 ])
+
+test('removes all tags', done => {
+  const state = {
+    count: 0
+  }
+  
+  const actions = {
+    finish: () => () => {
+      expect(document.body.innerHTML).toBe(
+        `<div></div>`
+      )
+      return done()
+    },
+    up: () => state => ({ count: state.count + 1 }),
+    down: () => state => ({ count: state.count - 1 })
+  }
+
+  const animations = {
+    onremove: (el, done) => {
+      setTimeout(done, 100)
+    }
+  }
+  
+  const view = (state, actions) => (
+    h('div', {}, [
+      state.count > 0 && h('span', {
+        onremove: animations.onremove,
+        key: 'one'
+      }, [ 'One' ]),
+      state.count > 0 && h('span', {
+        onremove: animations.onremove,
+        key: 'two'
+      }, [ 'Two' ])
+    ].filter(Boolean))
+  )
+
+  const main = app(state, actions, view, document.body)
+  main.up();
+  setTimeout(() => {
+    main.down()
+    setTimeout(() => {
+      main.up()
+      setTimeout(() => {
+        main.down()
+        setTimeout(() => main.finish(), 120);
+      })
+    })
+  })
+})
